@@ -86,12 +86,12 @@ goos: linux
 goarch: amd64
 pkg: github.com/vlourme/go-proxy
 cpu: Intel(R) Xeon(R) CPU E5-2630L v2 @ 2.40GHz
-BenchmarkProxyServer/Concurrent=100-24         	1000000000	         0.007529 ns/op	         4.000 ms/avg	         2.000 ms/fast	         6.000 ms/slow	     13305 req/s
-BenchmarkProxyServer/Concurrent=250-24         	1000000000	         0.01743 ns/op	        11.00 ms/avg	         3.000 ms/fast	        17.00 ms/slow	     14351 req/s
-BenchmarkProxyServer/Concurrent=500-24         	1000000000	         0.03109 ns/op	        21.00 ms/avg	         2.000 ms/fast	        29.00 ms/slow	     16088 req/s
-BenchmarkProxyServer/Concurrent=1000-24        	1000000000	         0.06422 ns/op	        43.00 ms/avg	         9.000 ms/fast	        62.00 ms/slow	     15575 req/s
-BenchmarkProxyServer/Concurrent=2500-24        	   78427	     18964 ns/op	       307.0 ms/avg	         2.000 ms/fast	      1092 ms/slow	      1681 req/s
-BenchmarkProxyServer/Concurrent=5000-24        	       1	9154174756 ns/op	         0 ms/avg	9223372036854 ms/fast	         0 ms/slow	       546.2 req/s
+BenchmarkProxyServer/Concurrent=100-24         	1000000000	         0.009295 ns/op	         5.000 ms/avg	         3.000 ms/fast	         8.000 ms/slow	     10779 req/s
+BenchmarkProxyServer/Concurrent=250-24         	1000000000	         0.01514 ns/op	        10.00 ms/avg	         4.000 ms/fast	        14.00 ms/slow	     16531 req/s
+BenchmarkProxyServer/Concurrent=500-24         	1000000000	         0.03646 ns/op	        22.00 ms/avg	        11.00 ms/fast	        34.00 ms/slow	     13719 req/s
+BenchmarkProxyServer/Concurrent=1000-24        	1000000000	         0.05916 ns/op	        36.00 ms/avg	         6.000 ms/fast	        56.00 ms/slow	     16909 req/s
+BenchmarkProxyServer/Concurrent=2500-24        	  411205	      3272 ns/op	       789.0 ms/avg	       241.0 ms/fast	      1275 ms/slow	      1858 req/s
+BenchmarkProxyServer/Concurrent=5000-24        	       1	2487619008 ns/op	      2126 ms/avg	       186.0 ms/fast	      2455 ms/slow	      2010 req/s
 PASS
-ok  	github.com/vlourme/go-proxy	13.621s
+ok  	github.com/vlourme/go-proxy	7.004s
 ```
