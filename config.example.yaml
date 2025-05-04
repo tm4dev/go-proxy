@@ -1,7 +1,7 @@
 listen_address: "::"
 listen_port: 8080
 debug_mode: false
-test_port: -1
+test_port: 0
 network_type: "tcp6"
 max_timeout: 30
 auth:
