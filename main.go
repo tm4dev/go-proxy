@@ -1,74 +1,77 @@
 package main
 
 import (
-	"crypto/tls"
-	"flag"
 	"fmt"
-	"log"
+	"net"
 	"net/http"
-	"time"
+	"os"
+	"runtime"
+
+	"github.com/libp2p/go-reuseport"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/vlourme/go-proxy/internal/config"
+	"github.com/vlourme/go-proxy/internal/handlers"
+	"github.com/vlourme/go-proxy/internal/sys"
 )
 
-var cidr string
-var username = flag.String("username", "", "The username to use for authentication")
-var password = flag.String("password", "", "The password to use for authentication")
-var port = flag.String("port", "8080", "The port to listen on")
-
 func main() {
-	flag.Parse()
-	cidr = flag.Arg(0)
+	config := config.Get()
 
-	if cidr == "" {
-		fmt.Println("Usage: proxy-server [flags] <ipv6-cidr>")
-		fmt.Println("\nFlags:")
-		flag.PrintDefaults()
-		fmt.Println("\nExample:")
-		fmt.Println("  proxy-server -port 8080 -username admin -password secret fd00::/64")
-		return
+	if config.DebugMode {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 	}
 
-	// Create a proxy server
-	proxy := &http.Server{
-		Addr: ":" + *port,
-		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			auth := NewProxyAuth()
-			var err error
-
-			if *username != "" && *password != "" {
-				auth, err = parseProxyAuth(r.Header.Get("Proxy-Authorization"))
-				if err != nil {
-					http.Error(w, "Invalid proxy authentication", http.StatusBadRequest)
-					return
-				}
-
-				if auth.Username != *username || auth.Password != *password {
-					http.Error(w, "Invalid proxy authentication", http.StatusBadRequest)
-					return
-				}
-			}
-
-			now := time.Now()
-			var status int
-
-			if r.Method == http.MethodConnect {
-				status, err = handleTunneling(w, r, auth) // HTTPS
+	sys.TuneSysctl()
+	for _, prefix := range config.BindPrefixes {
+		if err := sys.AddRoute(prefix); err != nil {
+			if err.Error() == "file exists" {
+				log.Info().Str("prefix", prefix).Msg("Route already exists")
 			} else {
-				status, err = handleHTTP(w, r, auth) // HTTP
+				log.Error().Err(err).Str("prefix", prefix).Msg("Failed to add route")
 			}
+		}
+	}
 
+	addr := net.TCPAddr{
+		IP:   net.ParseIP(config.ListenAddress),
+		Port: int(config.ListenPort),
+	}
+
+	if config.TestPort > 0 {
+		log.Info().Uint16("port", config.TestPort).Msg("Starting test server")
+		go func() {
+			server := &http.Server{
+				Addr: fmt.Sprintf("[::]:%d", config.TestPort),
+				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte("Hello, World!"))
+				}),
+			}
+			if err := server.ListenAndServe(); err != nil {
+				log.Error().Err(err).Msg("Failed to start server")
+			}
+		}()
+	}
+
+	log.Info().Int("count", runtime.NumCPU()).Str("address", addr.String()).Msg("Starting listeners")
+	for idx := range runtime.NumCPU() {
+		go func(idx int) {
+			listener, err := reuseport.Listen("tcp", addr.String())
 			if err != nil {
-				log.Printf("[%s][%s][%d] %s -> %s: %s", r.RemoteAddr, time.Since(now), status, r.Method, r.Host, err)
-			} else {
-				log.Printf("[%s][%s][%d] %s -> %s", r.RemoteAddr, time.Since(now), status, r.Method, r.Host)
+				log.Error().Err(err).Msg("Failed to create listener")
+				return
 			}
-		}),
+
+			for {
+				conn, err := listener.Accept()
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to accept connection")
+				}
+
+				go handlers.HandleConnection(idx, conn)
+			}
+		}(idx)
 	}
 
-	fmt.Printf("Starting proxy server on :e%s\n", *port)
-	if err := proxy.ListenAndServe(); err != nil {
-		log.Fatal("ListenAndServe:", err)
-	}
+	select {}
 }

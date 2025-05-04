@@ -1,0 +1,19 @@
+listen_address: "::"
+listen_port: 8080
+debug_mode: false
+test_port: -1
+network_type: "tcp6"
+max_timeout: 30
+auth:
+  type: "credentials"
+  credentials:
+    username: "username"
+    password: "password"
+  redis:
+    dsn: "redis://localhost:6379"
+bind_prefixes:
+  - "2a14:dead:beef::1/48"
+  - "2a14:dead:feed::1/48"
+deleted_headers:
+  - "Proxy-Authorization"
+  - "Proxy-Connection"
