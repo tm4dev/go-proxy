@@ -7,7 +7,7 @@ A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, sess
 - Multiple IPv6-IPv4 prefixes supported
 - Session and timeout support to re-use generated IP.
 - HTTP/HTTPS tunneling
-- Up to 16k requests per second.
+- Up to 15,000 requests per second.
 - DNS resolution and caching.
 - Automatic IPv6 routing and sysctl setup.
 - One core = one listener via reuseport.
@@ -16,7 +16,7 @@ A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, sess
 
 - No SOCKS5 support
 - Redis authentication is not supported yet.
-- After 1000 concurrent connections, RPS decreases, this is being worked on.
+- After 2,500 concurrent connections, RPS decreases, this is being worked on.
 
 ## Setup
 
@@ -37,6 +37,7 @@ debug_mode: false # Enable pretty-print logs, don't enable in production
 test_port: -1 # Enable a test server on port 8081 for benchmarking
 network_type: "tcp6" # tcp = dual-stack, tcp6 = IPv6 only, tcp4 = IPv4 only
 max_timeout: 30 # Maximum timeout for a request in seconds
+http_close: true # Force "Connection: close" header in HTTP-only requests (faster)
 auth:
   type: "credentials" # none, credentials, redis
   credentials:
@@ -86,12 +87,19 @@ goos: linux
 goarch: amd64
 pkg: github.com/vlourme/go-proxy
 cpu: Intel(R) Xeon(R) CPU E5-2630L v2 @ 2.40GHz
-BenchmarkProxyServer/Concurrent=100-24         	1000000000	         0.009295 ns/op	         5.000 ms/avg	         3.000 ms/fast	         8.000 ms/slow	     10779 req/s
-BenchmarkProxyServer/Concurrent=250-24         	1000000000	         0.01514 ns/op	        10.00 ms/avg	         4.000 ms/fast	        14.00 ms/slow	     16531 req/s
-BenchmarkProxyServer/Concurrent=500-24         	1000000000	         0.03646 ns/op	        22.00 ms/avg	        11.00 ms/fast	        34.00 ms/slow	     13719 req/s
-BenchmarkProxyServer/Concurrent=1000-24        	1000000000	         0.05916 ns/op	        36.00 ms/avg	         6.000 ms/fast	        56.00 ms/slow	     16909 req/s
-BenchmarkProxyServer/Concurrent=2500-24        	  411205	      3272 ns/op	       789.0 ms/avg	       241.0 ms/fast	      1275 ms/slow	      1858 req/s
-BenchmarkProxyServer/Concurrent=5000-24        	       1	2487619008 ns/op	      2126 ms/avg	       186.0 ms/fast	      2455 ms/slow	      2010 req/s
+BenchmarkProxyServer
+BenchmarkProxyServer/Concurrent=100
+BenchmarkProxyServer/Concurrent=100-24         	1000000000	         0.006658 ns/op	         4.000 ms/avg	         1.000 ms/fast	         6.000 ms/slow	     15049 req/s
+BenchmarkProxyServer/Concurrent=250
+BenchmarkProxyServer/Concurrent=250-24         	1000000000	         0.01705 ns/op	        10.00 ms/avg	         2.000 ms/fast	        16.00 ms/slow	     14671 req/s
+BenchmarkProxyServer/Concurrent=500
+BenchmarkProxyServer/Concurrent=500-24         	1000000000	         0.03584 ns/op	        22.00 ms/avg	         1.000 ms/fast	        33.00 ms/slow	     13956 req/s
+BenchmarkProxyServer/Concurrent=1000
+BenchmarkProxyServer/Concurrent=1000-24        	1000000000	         0.06664 ns/op	        41.00 ms/avg	         5.000 ms/fast	        64.00 ms/slow	     15012 req/s
+BenchmarkProxyServer/Concurrent=2500
+BenchmarkProxyServer/Concurrent=2500-24        	1000000000	         0.2146 ns/op	       141.0 ms/avg	        16.00 ms/fast	       209.0 ms/slow	     11649 req/s
+BenchmarkProxyServer/Concurrent=5000
+BenchmarkProxyServer/Concurrent=5000-24        	       2	 777280092 ns/op	       611.0 ms/avg	        69.00 ms/fast	      1502 ms/slow	      3216 req/s
 PASS
-ok  	github.com/vlourme/go-proxy	7.004s
+ok  	github.com/vlourme/go-proxy	6.332s
 ```

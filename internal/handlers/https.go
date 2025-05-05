@@ -3,6 +3,7 @@ package handlers
 import (
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/vlourme/go-proxy/internal/auth"
@@ -54,7 +55,5 @@ func HandleTunneling(w net.Conn, r *http.Request) int64 {
 	}
 
 	w.Write([]byte("HTTP/1.1 200 Connection Established\r\n\r\n"))
-	return nio.CopyBidirectional(w, destConn)
-
-	return 0
+	return nio.CopyBidirectional(w, destConn, time.Duration(config.Get().MaxTimeout)*time.Second)
 }

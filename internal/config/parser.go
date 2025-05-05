@@ -39,6 +39,8 @@ type Config struct {
 	NetworkType NetworkType `yaml:"network_type"`
 	// MaxTimeout is the maximum timeout for a session.
 	MaxTimeout int `yaml:"max_timeout"`
+	// HTTPClose is whether to force "Connection: close" header in HTTP-only requests.
+	HTTPClose bool `yaml:"http_close"`
 	// Auth is the authentication configuration.
 	Auth struct {
 		Type        AuthType `yaml:"type"`

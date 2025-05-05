@@ -27,6 +27,10 @@ func HandleHTTP(w net.Conn, r *http.Request) int64 {
 		r.Header.Del(header)
 	}
 
+	if config.Get().HTTPClose {
+		r.Header.Set("Connection", "close")
+	}
+
 	dialer, err := nio.GetDialer(params[auth.ParamSession], params[auth.ParamTimeout])
 	if err != nil {
 		log.Error().Err(err).Msg("Error getting dialer")
@@ -54,5 +58,5 @@ func HandleHTTP(w net.Conn, r *http.Request) int64 {
 
 	defer destConn.Close()
 	r.Write(destConn)
-	return nio.CopyTimeout(w, destConn, 15*time.Second)
+	return nio.CopyTimeout(w, destConn, time.Duration(config.Get().MaxTimeout)*time.Second)
 }

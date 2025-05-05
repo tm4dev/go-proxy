@@ -9,10 +9,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const (
-	DefaultTimeout = 1 * time.Second
-)
-
 // CopyTimeout copies data between two io.ReadCloser and io.WriteCloser
 // with a timeout
 func CopyTimeout(destination, source net.Conn, timeout time.Duration) int64 {
@@ -33,7 +29,7 @@ func CopyTimeout(destination, source net.Conn, timeout time.Duration) int64 {
 
 // CopyBidirectional copies data between two io.ReadCloser and io.WriteCloser
 // in both directions
-func CopyBidirectional(destination, source net.Conn) int64 {
+func CopyBidirectional(destination, source net.Conn, timeout time.Duration) int64 {
 	defer destination.Close()
 	defer source.Close()
 
@@ -43,12 +39,12 @@ func CopyBidirectional(destination, source net.Conn) int64 {
 
 	go func() {
 		defer wg.Done()
-		atomic.AddInt64(&written, CopyTimeout(destination, source, DefaultTimeout))
+		atomic.AddInt64(&written, CopyTimeout(destination, source, timeout))
 	}()
 
 	go func() {
 		defer wg.Done()
-		atomic.AddInt64(&written, CopyTimeout(source, destination, DefaultTimeout))
+		atomic.AddInt64(&written, CopyTimeout(source, destination, timeout))
 	}()
 
 	wg.Wait()
