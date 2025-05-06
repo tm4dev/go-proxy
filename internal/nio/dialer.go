@@ -17,20 +17,20 @@ var sessions = lru.NewTTLCache[string, net.IP](1024 * 1024)
 //   - If the session is not found, a new IP address is generated and the session is added to the cache.
 //   - If the session is found, the IP address is returned.
 //   - If the timeout is not provided, it defaults to 5 minutes.
-func GetDialer(session, timeout string) (*net.Dialer, error) {
+func GetDialer(session, timeout, location string) (*net.Dialer, error) {
 	var ip net.IP
 	var err error
 	var ok bool
 
 	if session == "" {
-		ip, err = utils.GenerateIP(config.GetAnyBindPrefix())
+		ip, err = utils.GenerateIP(GetCidrPrefix(location))
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		ip, ok = sessions.Get(session)
 		if !ok {
-			ip, err = utils.GenerateIP(config.GetAnyBindPrefix())
+			ip, err = utils.GenerateIP(GetCidrPrefix(location))
 			if err != nil {
 				return nil, err
 			}
@@ -54,4 +54,21 @@ func GetDialer(session, timeout string) (*net.Dialer, error) {
 		Timeout:       5 * time.Second,
 		KeepAlive:     -1,
 	}, nil
+}
+
+// GetCidrPrefix returns a random CIDR prefix for the given location.
+//
+//   - If the location is empty or not found, a random bind prefix is returned.
+//   - Otherwise, a random prefix from the located prefixes is returned.
+func GetCidrPrefix(location string) net.IPNet {
+	if location == "" {
+		return config.GetAnyBindPrefix()
+	}
+
+	prefixes, ok := config.GetLocatedPrefixes()[location]
+	if !ok {
+		return config.GetAnyBindPrefix()
+	}
+
+	return prefixes[utils.RandomInt(len(prefixes))]
 }

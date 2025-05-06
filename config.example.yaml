@@ -15,6 +15,11 @@ auth:
 bind_prefixes:
   - "2a14:dead:beef::1/48"
   - "2a14:dead:feed::1/48"
+located_prefixes:
+  us:
+    - 2a14:dead:beef::/48
+  uk:
+    - 2a14:dead:feed::/48
 deleted_headers:
   - "Proxy-Authorization"
   - "Proxy-Connection"

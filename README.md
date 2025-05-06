@@ -4,9 +4,8 @@ A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, sess
 ## Features
 
 - IPv4 or IPv6 back-connect
-- Multiple IPv6-IPv4 prefixes supported
+- Multiple IPv6-IPv4 prefixes supported, with per-country prefixes
 - Session and timeout support to re-use generated IP.
-- HTTP/HTTPS tunneling
 - Up to 15,000 requests per second.
 - DNS resolution and caching.
 - Automatic IPv6 routing and sysctl setup.
@@ -48,6 +47,11 @@ auth:
 bind_prefixes:
   - "2a14:dead:beef::1/48" # List of prefixes to bind to
   - "2a14:dead:feed::1/48"
+located_prefixes:
+  ch:
+    - "2a14:dead:beef::/48"
+  uk:
+    - "2a14:dead:feed::/48"
 deleted_headers: # List of headers to delete (HTTP only), this make proxy anonymous
   - "Proxy-Authorization"
   - "Proxy-Connection"

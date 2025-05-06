@@ -29,7 +29,11 @@ func HandleTunneling(w net.Conn, r *http.Request) int64 {
 
 	params := auth.GetParams(encodedParams)
 
-	dialer, err := nio.GetDialer(params[auth.ParamSession], params[auth.ParamTimeout])
+	dialer, err := nio.GetDialer(
+		params[auth.ParamSession],
+		params[auth.ParamTimeout],
+		params[auth.ParamLocation],
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("Error getting dialer")
 		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))

@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	ParamSession string = "session"
-	ParamTimeout string = "timeout"
+	ParamSession  string = "session"
+	ParamTimeout  string = "timeout"
+	ParamLocation string = "country"
 )
 
 var sessionRegex = regexp.MustCompile(`^[a-zA-Z]+$`)

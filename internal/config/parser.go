@@ -54,12 +54,15 @@ type Config struct {
 	} `yaml:"auth"`
 	// BindPrefixes is the list of prefixes to bind to.
 	BindPrefixes []string `yaml:"bind_prefixes"`
+	// LocatedPrefixes is the list of prefixes to bind to for each location.
+	LocatedPrefixes map[string][]string `yaml:"located_prefixes"`
 	// DeletedHeaders is the list of headers to delete.
 	DeletedHeaders []string `yaml:"deleted_headers"`
 }
 
 var config *Config
-var bindPrefixes []net.IPNet
+var bindPrefixes = []net.IPNet{}
+var locatedPrefixes = map[string][]net.IPNet{}
 
 func load() *Config {
 	path := flag.String("config", "config.yaml", "The path to the config file")
@@ -84,6 +87,16 @@ func load() *Config {
 		bindPrefixes = append(bindPrefixes, *ipnet)
 	}
 
+	for location, prefixes := range cfg.LocatedPrefixes {
+		for _, prefix := range prefixes {
+			_, ipnet, err := net.ParseCIDR(prefix)
+			if err != nil {
+				log.Fatal().Err(err).Msg("Error parsing located prefix")
+			}
+			locatedPrefixes[location] = append(locatedPrefixes[location], *ipnet)
+		}
+	}
+
 	return &cfg
 }
 
@@ -104,4 +117,9 @@ func GetBindPrefixes() []net.IPNet {
 // GetAnyBindPrefix returns a random bind prefix
 func GetAnyBindPrefix() net.IPNet {
 	return bindPrefixes[utils.RandomInt(len(bindPrefixes))]
+}
+
+// GetLocatedPrefixes returns the located prefixes
+func GetLocatedPrefixes() map[string][]net.IPNet {
+	return locatedPrefixes
 }
