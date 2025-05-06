@@ -2,9 +2,10 @@ package auth
 
 import (
 	"encoding/base64"
-	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/vlourme/go-proxy/internal/http"
 )
 
 const (
@@ -17,7 +18,7 @@ var sessionRegex = regexp.MustCompile(`^[a-zA-Z]+$`)
 
 // GetCredentials returns the username, password and params from the Proxy-Authorization header
 func GetCredentials(req *http.Request) (string, string, string) {
-	auth := req.Header.Get("Proxy-Authorization")
+	auth := string(req.Header["Proxy-Authorization"])
 	if auth == "" {
 		return "", "", ""
 	}

@@ -28,6 +28,13 @@ var dnsCache = lru.NewTTLCache[string, string](4096)
 // ResolveHostname resolves the hostname to an IP address
 // based on the network type.
 func ResolveHostname(hostname string, networkType config.NetworkType) (string, error) {
+	if isLocalhost(hostname) {
+		if !config.Get().DebugMode {
+			return "", fmt.Errorf("localhost is not allowed in non-debug mode")
+		}
+		return hostname, nil
+	}
+
 	ip, ok := dnsCache.Get(hostname)
 	if ok {
 		return ip, nil
@@ -64,4 +71,8 @@ addrLoop:
 
 	dnsCache.Set(hostname, ip, CACHE_TTL)
 	return ip, nil
+}
+
+func isLocalhost(hostname string) bool {
+	return hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1" || hostname == "[::1]"
 }

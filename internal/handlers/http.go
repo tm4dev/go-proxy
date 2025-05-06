@@ -2,14 +2,13 @@ package handlers
 
 import (
 	"net"
-	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/vlourme/go-proxy/internal/auth"
 	"github.com/vlourme/go-proxy/internal/config"
+	"github.com/vlourme/go-proxy/internal/http"
 	"github.com/vlourme/go-proxy/internal/nio"
-	"github.com/vlourme/go-proxy/internal/utils"
 )
 
 // HandleHTTP handles the HTTP request
@@ -24,11 +23,11 @@ func HandleHTTP(w net.Conn, r *http.Request) int64 {
 	params := auth.GetParams(encodedParams)
 
 	for _, header := range config.Get().DeletedHeaders {
-		r.Header.Del(header)
+		delete(r.Header, header)
 	}
 
 	if config.Get().HTTPClose {
-		r.Header.Set("Connection", "close")
+		r.Header["Connection"] = []byte("close")
 	}
 
 	dialer, err := nio.GetDialer(
@@ -42,8 +41,7 @@ func HandleHTTP(w net.Conn, r *http.Request) int64 {
 		return -1
 	}
 
-	host, port := utils.GetHostAndPort(r.URL)
-	ip, err := nio.ResolveHostname(host, config.Get().NetworkType)
+	ip, err := nio.ResolveHostname(string(r.Host), config.Get().NetworkType)
 	if err != nil {
 		log.Error().Err(err).Msg("Error resolving hostname")
 		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
@@ -52,7 +50,7 @@ func HandleHTTP(w net.Conn, r *http.Request) int64 {
 
 	destConn, err := dialer.Dial(
 		string(config.Get().NetworkType),
-		ip+":"+port,
+		ip+":"+string(r.Port),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Error dialing")
@@ -61,6 +59,12 @@ func HandleHTTP(w net.Conn, r *http.Request) int64 {
 	}
 
 	defer destConn.Close()
-	r.Write(destConn)
+	_, err = r.WriteTo(destConn)
+	if err != nil {
+		log.Error().Err(err).Msg("Error writing request")
+		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
+		return -1
+	}
+
 	return nio.CopyTimeout(w, destConn, time.Duration(config.Get().MaxTimeout)*time.Second)
 }

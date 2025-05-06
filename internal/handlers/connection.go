@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog/log"
+	httpParse "github.com/vlourme/go-proxy/internal/http"
 )
 
 func HandleConnection(workerId int, conn net.Conn) {
@@ -13,31 +14,33 @@ func HandleConnection(workerId int, conn net.Conn) {
 
 	reader := bufio.NewReader(conn)
 	for {
-		req, err := http.ReadRequest(reader)
+		req, err := httpParse.ParseRequest(reader)
 		if err != nil {
 			break
 		}
 
 		var written int64
-		if req.Method == http.MethodConnect {
+		if string(req.Method) == http.MethodConnect {
 			written = HandleTunneling(conn, req)
 		} else {
 			written = HandleHTTP(conn, req)
 		}
 
+		req.Release()
+
 		if written == -1 {
 			log.Error().
 				Int("worker_id", workerId).
-				Str("method", req.Method).
-				Str("url", req.RequestURI).
+				Str("method", string(req.Method)).
+				Str("url", string(req.URL)).
 				Msg("Request failed")
 
 			break
 		} else {
 			log.Trace().
 				Int("worker_id", workerId).
-				Str("method", req.Method).
-				Str("url", req.RequestURI).
+				Str("method", string(req.Method)).
+				Str("url", string(req.URL)).
 				Int64("written", written).
 				Msg("Request handled")
 		}

@@ -2,14 +2,13 @@ package handlers
 
 import (
 	"net"
-	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/vlourme/go-proxy/internal/auth"
 	"github.com/vlourme/go-proxy/internal/config"
+	"github.com/vlourme/go-proxy/internal/http"
 	"github.com/vlourme/go-proxy/internal/nio"
-	"github.com/vlourme/go-proxy/internal/utils"
 )
 
 // HandleTunneling handles the HTTPS tunneling request
@@ -40,8 +39,7 @@ func HandleTunneling(w net.Conn, r *http.Request) int64 {
 		return -1
 	}
 
-	host, port := utils.GetHostAndPort(r.URL)
-	ip, err := nio.ResolveHostname(host, config.Get().NetworkType)
+	ip, err := nio.ResolveHostname(string(r.Host), config.Get().NetworkType)
 	if err != nil {
 		log.Error().Err(err).Msg("Error resolving hostname")
 		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
@@ -50,7 +48,7 @@ func HandleTunneling(w net.Conn, r *http.Request) int64 {
 
 	destConn, err := dialer.Dial(
 		string(config.Get().NetworkType),
-		ip+":"+port,
+		ip+":"+string(r.Port),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Error dialing")
