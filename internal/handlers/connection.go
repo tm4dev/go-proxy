@@ -33,6 +33,8 @@ func HandleConnection(workerId int, conn net.Conn) {
 				Int("worker_id", workerId).
 				Str("url", string(req.URL)).
 				Msg("Request failed")
+
+			break
 		} else {
 			log.Trace().
 				Int("worker_id", workerId).
