@@ -5,16 +5,16 @@ A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, sess
 
 - IPv4 or IPv6 back-connect
 - Multiple IPv6-IPv4 prefixes supported, with per-country prefixes
-- Session and timeout support to re-use generated IP.
-- Up to 14,000 requests per second.
-- DNS resolution and caching.
-- Automatic IPv6 routing and sysctl setup.
-- One core = one listener via reuseport.
+- Session and timeout support to re-use generated IP
+- Up to 14,000 requests per second
+- DNS resolution and caching
+- Automatic IPv6 routing and sysctl setup
+- One core = one listener via reuseport
 
 ## Limitations
 
 - No SOCKS5 support
-- Redis authentication is not supported yet.
+  - SOCKS5 resolves IP locally which makes it inefficient for hosts without IPv6
 
 ## Setup
 
