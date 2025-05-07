@@ -56,6 +56,8 @@ type Config struct {
 	BindPrefixes []string `yaml:"bind_prefixes"`
 	// LocatedPrefixes is the list of prefixes to bind to for each location.
 	LocatedPrefixes map[string][]string `yaml:"located_prefixes"`
+	// ReplaceIPs is the list of IPs to replace with the override.
+	ReplaceIPs map[string]string `yaml:"replace_ips"`
 	// DeletedHeaders is the list of headers to delete.
 	DeletedHeaders []string `yaml:"deleted_headers"`
 }
@@ -63,6 +65,7 @@ type Config struct {
 var config *Config
 var bindPrefixes = []net.IPNet{}
 var locatedPrefixes = map[string][]net.IPNet{}
+var replaceIPs = map[*net.IPNet]string{}
 
 func load() *Config {
 	path := flag.String("config", "config.yaml", "The path to the config file")
@@ -97,6 +100,14 @@ func load() *Config {
 		}
 	}
 
+	for cidr, ip := range cfg.ReplaceIPs {
+		_, ipnet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error parsing replace IP")
+		}
+		replaceIPs[ipnet] = ip
+	}
+
 	return &cfg
 }
 
@@ -122,4 +133,9 @@ func GetAnyBindPrefix() net.IPNet {
 // GetLocatedPrefixes returns the located prefixes
 func GetLocatedPrefixes() map[string][]net.IPNet {
 	return locatedPrefixes
+}
+
+// GetReplaceIPs returns the replace IPs
+func GetReplaceIPs() map[*net.IPNet]string {
+	return replaceIPs
 }

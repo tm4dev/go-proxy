@@ -53,6 +53,8 @@ located_prefixes:
     - "2a14:dead:beef::/48"
   uk:
     - "2a14:dead:feed::/48"
+replace_ips:
+  "1.2.3.0/24": "2a14:dead:beef::"
 deleted_headers: # List of headers to delete (HTTP only), this make proxy anonymous
   - "Proxy-Authorization"
   - "Proxy-Connection"
@@ -76,10 +78,29 @@ curl -x http://john-session-abcdef1234:doe@localhost:8080 http://api.ipquery.io
 
 # Session with timeout
 curl -x http://john-session-abcdef1234-timeout-10:doe@localhost:8080 http://api.ipquery.io
+
+# Location override
+curl -x http://john-country-ch:doe@localhost:8080 http://api.ipquery.io
 ```
 
 > Session ID must be alphanumeric, between 6 and 24 characters.
 > The timeout is in minutes, between 1 and 30 minutes.
+
+### IP Override
+
+IP override is a map of CIDR to IP.
+If the resolved IP is present in any defined CIDR, it will be replaced with the override.
+Some domains does not reply any `AAAA` record, but in fact, they support IPv6 by replacing the DNS resolution.
+This can be used to bypass some IPv6 limitations of CDN and DNS providers.
+
+Example config:
+```yaml
+replace_ips:
+  "1.2.3.0/24": "2a14:dead:beef::"
+```
+
+If you're domain resolve to `1.2.3.4`, it will be replaced with `2a14:dead:beef::` by the proxy.
+
 
 ## Benchmark
 

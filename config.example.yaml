@@ -20,6 +20,8 @@ located_prefixes:
     - 2a14:dead:beef::/48
   uk:
     - 2a14:dead:feed::/48
+replace_ips:
+  "1.2.3.0/24": "2a14:dead:beef::"
 deleted_headers:
   - "Proxy-Authorization"
   - "Proxy-Connection"

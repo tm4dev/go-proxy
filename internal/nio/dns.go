@@ -2,13 +2,19 @@ package nio
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net"
 	"strings"
 	"time"
 
 	"github.com/phuslu/lru"
+	"github.com/rs/zerolog/log"
 	"github.com/vlourme/go-proxy/internal/config"
+)
+
+var (
+	ErrNoLocalhost = errors.New("localhost is not allowed in non-debug mode")
+	ErrNoIPFound   = errors.New("no IP address found")
 )
 
 var resolver = &net.Resolver{
@@ -28,9 +34,10 @@ var dnsCache = lru.NewTTLCache[string, string](4096)
 // ResolveHostname resolves the hostname to an IP address
 // based on the network type.
 func ResolveHostname(hostname string, networkType config.NetworkType) (string, error) {
+	cfg := config.Get()
 	if isLocalhost(hostname) {
-		if !config.Get().DebugMode {
-			return "", fmt.Errorf("localhost is not allowed in non-debug mode")
+		if !cfg.DebugMode {
+			return "", ErrNoLocalhost
 		}
 		return hostname, nil
 	}
@@ -45,24 +52,37 @@ func ResolveHostname(hostname string, networkType config.NetworkType) (string, e
 		return "", err
 	}
 
-addrLoop:
 	for _, addr := range addrs {
-		switch networkType {
-		case config.NetworkTypeIPv4:
-			if !strings.Contains(addr, ":") {
-				ip = addr
-				break addrLoop
+		if !strings.Contains(addr, ":") { // IPv4
+			ip = addr
+
+			if networkType == config.NetworkTypeIPv4 {
+				break
 			}
-		case config.NetworkTypeIPv6:
-			if strings.Contains(addr, ":") {
-				ip = addr
-				break addrLoop
+		}
+
+		if strings.Contains(addr, ":") { // IPv6
+			ip = addr
+
+			if networkType == config.NetworkTypeIPv6 {
+				break
 			}
 		}
 	}
 
 	if ip == "" {
-		return "", fmt.Errorf("no %s address found", networkType)
+		return "", ErrNoIPFound
+	}
+
+	if len(config.GetReplaceIPs()) > 0 {
+		parsedIP := net.ParseIP(ip)
+		for cidr, replacement := range config.GetReplaceIPs() {
+			if cidr.Contains(parsedIP) {
+				ip = replacement
+				log.Info().Str("ip", ip).Str("hostname", hostname).Msg("DNS override found")
+				break
+			}
+		}
 	}
 
 	if networkType == config.NetworkTypeIPv6 {
