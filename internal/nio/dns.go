@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/phuslu/lru"
@@ -33,7 +32,7 @@ var dnsCache = lru.NewTTLCache[string, string](4096)
 
 // ResolveHostname resolves the hostname to an IP address
 // based on the network type.
-func ResolveHostname(hostname string, networkType config.NetworkType) (string, error) {
+func ResolveHostname(hostname string) (string, error) {
 	cfg := config.Get()
 	if isLocalhost(hostname) {
 		if !cfg.DebugMode {
@@ -53,20 +52,11 @@ func ResolveHostname(hostname string, networkType config.NetworkType) (string, e
 	}
 
 	for _, addr := range addrs {
-		if !strings.Contains(addr, ":") { // IPv4
+		if IsIPv6(addr) { // IPv6
 			ip = addr
-
-			if networkType == config.NetworkTypeIPv4 {
-				break
-			}
-		}
-
-		if strings.Contains(addr, ":") { // IPv6
+			break
+		} else { // IPv4
 			ip = addr
-
-			if networkType == config.NetworkTypeIPv6 {
-				break
-			}
 		}
 	}
 
@@ -85,7 +75,7 @@ func ResolveHostname(hostname string, networkType config.NetworkType) (string, e
 		}
 	}
 
-	if networkType == config.NetworkTypeIPv6 {
+	if IsIPv6(ip) {
 		ip = "[" + ip + "]"
 	}
 

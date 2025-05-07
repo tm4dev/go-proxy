@@ -3,9 +3,11 @@ package nio
 import (
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/phuslu/lru"
+	"github.com/rs/zerolog/log"
 	"github.com/vlourme/go-proxy/internal/config"
 	"github.com/vlourme/go-proxy/internal/utils"
 )
@@ -17,20 +19,20 @@ var sessions = lru.NewTTLCache[string, net.IP](1024 * 1024)
 //   - If the session is not found, a new IP address is generated and the session is added to the cache.
 //   - If the session is found, the IP address is returned.
 //   - If the timeout is not provided, it defaults to 5 minutes.
-func GetDialer(session, timeout, location string) (*net.Dialer, error) {
-	var ip net.IP
+func GetDialer(ip, session, timeout, location string) (*net.Dialer, error) {
+	var local net.IP
 	var err error
 	var ok bool
 
 	if session == "" {
-		ip, err = utils.GenerateIP(GetCidrPrefix(location))
+		local, err = utils.GenerateIP(GetCidrPrefix(location))
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		ip, ok = sessions.Get(session)
+		local, ok = sessions.Get(session)
 		if !ok {
-			ip, err = utils.GenerateIP(GetCidrPrefix(location))
+			local, err = utils.GenerateIP(GetCidrPrefix(location))
 			if err != nil {
 				return nil, err
 			}
@@ -44,12 +46,25 @@ func GetDialer(session, timeout, location string) (*net.Dialer, error) {
 				minutes = config.Get().MaxTimeout
 			}
 
-			sessions.Set(session, ip, time.Duration(minutes)*time.Minute)
+			sessions.Set(session, local, time.Duration(minutes)*time.Minute)
 		}
 	}
 
+	// Fallback to IPv4 if the target does not match local address family
+	if config.Get().EnableFallback && IsIPv6(ip) != IsIPv6(local.String()) {
+		fallback := config.GetAnyFallbackPrefix()
+		log.Warn().Msgf("IPv4 target, using fallback prefix: %s", fallback)
+
+		return &net.Dialer{
+			LocalAddr:     &net.TCPAddr{IP: fallback.IP},
+			FallbackDelay: -1,
+			Timeout:       5 * time.Second,
+			KeepAlive:     -1,
+		}, nil
+	}
+
 	return &net.Dialer{
-		LocalAddr:     &net.TCPAddr{IP: ip},
+		LocalAddr:     &net.TCPAddr{IP: local},
 		FallbackDelay: -1,
 		Timeout:       5 * time.Second,
 		KeepAlive:     -1,
@@ -71,4 +86,8 @@ func GetCidrPrefix(location string) net.IPNet {
 	}
 
 	return prefixes[utils.RandomInt(len(prefixes))]
+}
+
+func IsIPv6(ip string) bool {
+	return strings.Contains(ip, ":")
 }

@@ -10,13 +10,6 @@ import (
 	"github.com/vlourme/go-proxy/internal/utils"
 )
 
-type NetworkType string
-
-const (
-	NetworkTypeIPv4 NetworkType = "tcp4"
-	NetworkTypeIPv6 NetworkType = "tcp6"
-)
-
 type AuthType string
 
 const (
@@ -35,8 +28,6 @@ type Config struct {
 	DebugMode bool `yaml:"debug_mode"`
 	// TestPort is the port to test the proxy.
 	TestPort uint16 `yaml:"test_port"`
-	// NetworkType is the type of network to use.
-	NetworkType NetworkType `yaml:"network_type"`
 	// MaxTimeout is the maximum timeout for a session.
 	MaxTimeout int `yaml:"max_timeout"`
 	// HTTPClose is whether to force "Connection: close" header in HTTP-only requests.
@@ -54,6 +45,10 @@ type Config struct {
 	} `yaml:"auth"`
 	// BindPrefixes is the list of prefixes to bind to.
 	BindPrefixes []string `yaml:"bind_prefixes"`
+	// EnableFallback is whether to enable the fallback prefix.
+	EnableFallback bool `yaml:"enable_fallback"`
+	// FallbackPrefixes is the list of IPv4 prefixes to bind if the target does not support IPv6.
+	FallbackPrefixes []string `yaml:"fallback_prefixes"`
 	// LocatedPrefixes is the list of prefixes to bind to for each location.
 	LocatedPrefixes map[string][]string `yaml:"located_prefixes"`
 	// ReplaceIPs is the list of IPs to replace with the override.
@@ -64,6 +59,7 @@ type Config struct {
 
 var config *Config
 var bindPrefixes = []net.IPNet{}
+var fallbackPrefixes = []net.IPNet{}
 var locatedPrefixes = map[string][]net.IPNet{}
 var replaceIPs = map[*net.IPNet]string{}
 
@@ -88,6 +84,14 @@ func load() *Config {
 			log.Fatal().Err(err).Msg("Error parsing bind prefix")
 		}
 		bindPrefixes = append(bindPrefixes, *ipnet)
+	}
+
+	for _, prefix := range cfg.FallbackPrefixes {
+		_, ipnet, err := net.ParseCIDR(prefix)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error parsing fallback prefix")
+		}
+		fallbackPrefixes = append(fallbackPrefixes, *ipnet)
 	}
 
 	for location, prefixes := range cfg.LocatedPrefixes {
@@ -128,6 +132,16 @@ func GetBindPrefixes() []net.IPNet {
 // GetAnyBindPrefix returns a random bind prefix
 func GetAnyBindPrefix() net.IPNet {
 	return bindPrefixes[utils.RandomInt(len(bindPrefixes))]
+}
+
+// GetFallbackPrefixes returns the fallback prefixes
+func GetFallbackPrefixes() []net.IPNet {
+	return fallbackPrefixes
+}
+
+// GetAnyFallbackPrefix returns a random fallback prefix
+func GetAnyFallbackPrefix() net.IPNet {
+	return fallbackPrefixes[utils.RandomInt(len(fallbackPrefixes))]
 }
 
 // GetLocatedPrefixes returns the located prefixes

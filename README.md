@@ -45,9 +45,12 @@ auth:
     password: "password"
   redis:
     dsn: "redis://localhost:6379" # Will compare the username as key to the password
-bind_prefixes:
+bind_prefixes: # IPv4/IPv6 prefixes to bind to
   - "2a14:dead:beef::1/48" # List of prefixes to bind to
   - "2a14:dead:feed::1/48"
+enable_fallback: true # Fallback to IPv4 if the target does not match generated IP family above
+fallback_prefixes:
+  - "1.2.3.4/32" # List of prefixes to fallback to, should be IPv4
 located_prefixes:
   ch:
     - "2a14:dead:beef::/48"

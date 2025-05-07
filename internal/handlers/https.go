@@ -28,7 +28,15 @@ func HandleTunneling(w net.Conn, r *http.Request) int64 {
 
 	params := auth.GetParams(encodedParams)
 
+	ip, err := nio.ResolveHostname(string(r.Host))
+	if err != nil {
+		log.Error().Err(err).Msg("Error resolving hostname")
+		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
+		return -1
+	}
+
 	dialer, err := nio.GetDialer(
+		ip,
 		params[auth.ParamSession],
 		params[auth.ParamTimeout],
 		params[auth.ParamLocation],
@@ -39,17 +47,7 @@ func HandleTunneling(w net.Conn, r *http.Request) int64 {
 		return -1
 	}
 
-	ip, err := nio.ResolveHostname(string(r.Host), config.Get().NetworkType)
-	if err != nil {
-		log.Error().Err(err).Msg("Error resolving hostname")
-		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
-		return -1
-	}
-
-	destConn, err := dialer.Dial(
-		string(config.Get().NetworkType),
-		ip+":"+string(r.Port),
-	)
+	destConn, err := dialer.Dial("tcp", ip+":"+string(r.Port))
 	if err != nil {
 		log.Error().Err(err).Msg("Error dialing")
 		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
