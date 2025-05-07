@@ -1,6 +1,7 @@
 # Go Proxy Server
 
 A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, session and external authentication.
+
 ## Features
 
 - IPv4 or IPv6 back-connect
@@ -9,7 +10,8 @@ A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, sess
 - Up to 14,000 requests per second
 - DNS resolution and caching
 - Automatic IPv6 routing and sysctl setup
-- One core = one listener via reuseport
+- Authentication with Redis or credentials
+- One listener per core via `SO_REUSEPORT` and `SO_REUSEADDR`
 
 ## Limitations
 
