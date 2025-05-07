@@ -5,7 +5,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Request struct {
@@ -33,7 +36,7 @@ func getRequest() *Request {
 	return req
 }
 
-func (req *Request) WriteTo(w io.Writer) (int64, error) {
+func (req *Request) WriteTo(w io.Writer, src *bufio.Reader) (total int64, err error) {
 	buf := bytes.NewBuffer(nil)
 	buf.Write(req.Method)
 	buf.Write([]byte(" "))
@@ -51,7 +54,27 @@ func (req *Request) WriteTo(w io.Writer) (int64, error) {
 
 	buf.Write([]byte("\r\n"))
 
-	return buf.WriteTo(w)
+	total, err = buf.WriteTo(w)
+	if err != nil {
+		return total, err
+	}
+
+	if clStr, ok := req.Header["Content-Length"]; ok {
+		log.Info().Str("content-length", string(clStr)).Msg("Writing body")
+		cl, err := strconv.Atoi(string(clStr))
+		if err != nil {
+			return total, fmt.Errorf("invalid Content-Length: %v", err)
+		}
+
+		log.Info().Msg("more to write")
+		n, err := io.CopyN(w, src, int64(cl))
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+
+	return total, nil
 }
 
 func (req *Request) Release() {
@@ -79,7 +102,10 @@ func ParseRequest(r *bufio.Reader) (*Request, error) {
 
 	req := getRequest()
 	req.Method = method
-	req.URL = url
+	// If buffer > 4096, the slice will move and the URL will be invalid
+	// This is kept only for logging purposes, it works without but
+	// the URL in the log will be invalid due to the buffer re-use.
+	req.URL = bytes.Clone(url)
 	req.Version = version
 
 	req.Host, req.Port, err = extractHostPort(req.Method, req.URL)

@@ -23,7 +23,7 @@ func HandleConnection(workerId int, conn net.Conn) {
 		if string(req.Method) == http.MethodConnect {
 			written = HandleTunneling(conn, req)
 		} else {
-			written = HandleHTTP(conn, req)
+			written = HandleHTTP(conn, reader, req)
 		}
 
 		req.Release()
@@ -31,15 +31,11 @@ func HandleConnection(workerId int, conn net.Conn) {
 		if written == -1 {
 			log.Error().
 				Int("worker_id", workerId).
-				Str("method", string(req.Method)).
 				Str("url", string(req.URL)).
 				Msg("Request failed")
-
-			break
 		} else {
 			log.Trace().
 				Int("worker_id", workerId).
-				Str("method", string(req.Method)).
 				Str("url", string(req.URL)).
 				Int64("written", written).
 				Msg("Request handled")

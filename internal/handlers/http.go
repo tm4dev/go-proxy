@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bufio"
 	"net"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 )
 
 // HandleHTTP handles the HTTP request
-func HandleHTTP(w net.Conn, r *http.Request) int64 {
+func HandleHTTP(w net.Conn, buf *bufio.Reader, r *http.Request) int64 {
 	username, password, encodedParams := auth.GetCredentials(r)
 	if !auth.Verify(username, password) {
 		log.Error().Msg("Invalid credentials")
@@ -59,7 +60,7 @@ func HandleHTTP(w net.Conn, r *http.Request) int64 {
 	}
 
 	defer destConn.Close()
-	_, err = r.WriteTo(destConn)
+	_, err = r.WriteTo(destConn, buf)
 	if err != nil {
 		log.Error().Err(err).Msg("Error writing request")
 		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
