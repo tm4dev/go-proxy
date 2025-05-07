@@ -6,7 +6,7 @@ A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, sess
 - IPv4 or IPv6 back-connect
 - Multiple IPv6-IPv4 prefixes supported, with per-country prefixes
 - Session and timeout support to re-use generated IP.
-- Up to 16,000 requests per second.
+- Up to 14,000 requests per second.
 - DNS resolution and caching.
 - Automatic IPv6 routing and sysctl setup.
 - One core = one listener via reuseport.
@@ -86,23 +86,53 @@ set to `username:password`.
 
 **Benchmark results on 24-cores dedicated server:**
 ```sh
-goos: linux
-goarch: amd64
-pkg: github.com/vlourme/go-proxy
-cpu: Intel(R) Xeon(R) CPU E5-2630L v2 @ 2.40GHz
-BenchmarkProxyServer
-BenchmarkProxyServer/Concurrent=100
-BenchmarkProxyServer/Concurrent=100-24         	1000000000	         0.006638 ns/op	         3.000 ms/avg	         1.000 ms/fast	         6.000 ms/slow	     15103 req/s
-BenchmarkProxyServer/Concurrent=250
-BenchmarkProxyServer/Concurrent=250-24         	1000000000	         0.01649 ns/op	         9.000 ms/avg	         2.000 ms/fast	        15.00 ms/slow	     15173 req/s
-BenchmarkProxyServer/Concurrent=500
-BenchmarkProxyServer/Concurrent=500-24         	1000000000	         0.03191 ns/op	        14.00 ms/avg	         1.000 ms/fast	        30.00 ms/slow	     15676 req/s
-BenchmarkProxyServer/Concurrent=1000
-BenchmarkProxyServer/Concurrent=1000-24        	1000000000	         0.06184 ns/op	        35.00 ms/avg	         6.000 ms/fast	        60.00 ms/slow	     16176 req/s
-BenchmarkProxyServer/Concurrent=2500
-BenchmarkProxyServer/Concurrent=2500-24        	1000000000	         0.1845 ns/op	       117.0 ms/avg	        23.00 ms/fast	       180.0 ms/slow	     13551 req/s
-BenchmarkProxyServer/Concurrent=5000
-BenchmarkProxyServer/Concurrent=5000-24        	1000000000	         0.3751 ns/op	       247.0 ms/avg	        25.00 ms/fast	       365.0 ms/slow	     13332 req/s
-PASS
-ok  	github.com/vlourme/go-proxy	10.439s
+$ go run ./cmd/test/
+Running benchmark: 100 concurrency, 600 total requests
+Fastest:  1.62083ms
+Slowest:  56.380979ms
+Average:  20.106005ms
+Total:    128.167636ms
+Throughput: 4681.37 req/s
+
+Running benchmark: 250 concurrency, 1500 total requests
+Fastest:  2.491974ms
+Slowest:  96.381628ms
+Average:  26.371493ms
+Total:    169.393879ms
+Throughput: 8855.10 req/s
+
+Running benchmark: 500 concurrency, 4000 total requests
+Fastest:  2.485129ms
+Slowest:  148.471635ms
+Average:  41.59583ms
+Total:    357.834735ms
+Throughput: 11178.34 req/s
+
+Running benchmark: 1000 concurrency, 6000 total requests
+Fastest:  1.481635ms
+Slowest:  220.899026ms
+Average:  68.733736ms
+Total:    437.22757ms
+Throughput: 13722.83 req/s
+
+Running benchmark: 2500 concurrency, 10000 total requests
+Fastest:  29.777132ms
+Slowest:  487.61035ms
+Average:  164.518955ms
+Total:    721.735415ms
+Throughput: 13855.49 req/s
+
+Running benchmark: 5000 concurrency, 20000 total requests
+Fastest:  970.738µs
+Slowest:  729.66545ms
+Average:  332.911955ms
+Total:    1.48569428s
+Throughput: 13461.72 req/s
+
+Running benchmark: 10000 concurrency, 40000 total requests
+Fastest:  67.003994ms
+Slowest:  1.244676058s
+Average:  661.01839ms
+Total:    2.919776624s
+Throughput: 13699.68 req/s
 ```
