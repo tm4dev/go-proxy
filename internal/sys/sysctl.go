@@ -31,9 +31,16 @@ func TuneSysctl() {
 
 	// Files and connection tracking
 	set("fs.file-max", "1048576")
-	set("net.netfilter.nf_conntrack_max", "262144")
 
 	// IPv6 / proxying
+	set("net.ipv6.conf.all.forwarding", "1")
 	set("net.ipv6.ip_nonlocal_bind", "1")
 	set("net.ipv6.conf.all.disable_ipv6", "0")
+
+	// TCP memory tuning
+	set("net.ipv4.tcp_rmem", "4096 87380 6291456")
+	set("net.ipv4.tcp_wmem", "4096 65536 6291456")
+	set("net.core.rmem_max", "16777216")
+	set("net.core.wmem_max", "16777216")
+	set("net.ipv4.tcp_congestion_control", "bbr")
 }
