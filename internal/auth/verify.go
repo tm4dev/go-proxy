@@ -1,6 +1,10 @@
 package auth
 
-import "github.com/vlourme/go-proxy/internal/config"
+import (
+	"context"
+
+	"github.com/vlourme/go-proxy/internal/config"
+)
 
 // VerifyCredentials verifies the credentials of the user
 func Verify(username, password string) bool {
@@ -25,5 +29,7 @@ func verifyCredentials(username, password string) bool {
 
 // verifyRedisCredentials verifies the credentials of the user using Redis
 func verifyRedisCredentials(username, password string) bool {
-	return true
+	client := GetRedisClient()
+
+	return client.Get(context.Background(), username).Val() == password
 }
