@@ -18,7 +18,11 @@ type Request struct {
 }
 
 var requestPool = sync.Pool{
-	New: func() any { return &Request{Header: make(map[string][]byte)} },
+	New: func() any {
+		return &Request{
+			Header: make(map[string][]byte, 16),
+		}
+	},
 }
 
 func getRequest() *Request {
