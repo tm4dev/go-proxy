@@ -43,6 +43,7 @@ func HandleHTTP(w net.Conn, buf *bufio.Reader, r *http.Request) int64 {
 		params[auth.ParamSession],
 		params[auth.ParamTimeout],
 		params[auth.ParamLocation],
+		params[auth.ParamFallback],
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Error getting dialer")

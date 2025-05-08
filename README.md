@@ -84,6 +84,10 @@ curl -x http://john-session-abcdef1234-timeout-10:doe@localhost:8080 http://api.
 
 # Location override
 curl -x http://john-country-ch:doe@localhost:8080 http://api.ipquery.io
+
+# Disable fallback (disable switching to IPv4 if the target is not IPv6-capable)
+# Recommended when using IPv6-only websites to ensure the IP is always IPv6
+curl -x http://john-fallback-no:doe@localhost:8080 http://api.ipquery.io
 ```
 
 > Session ID must be alphanumeric, between 6 and 24 characters.

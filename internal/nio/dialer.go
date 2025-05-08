@@ -19,7 +19,12 @@ var sessions = lru.NewTTLCache[string, net.IP](1024 * 1024)
 //   - If the session is not found, a new IP address is generated and the session is added to the cache.
 //   - If the session is found, the IP address is returned.
 //   - If the timeout is not provided, it defaults to 5 minutes.
-func GetDialer(ip, session, timeout, location string) (*net.Dialer, error) {
+//
+// About fallback:
+//   - If the user-provided fallback is "no", the fallback will be disabled.
+//   - If the resolved IP is not the same family as the local address, the fallback will be used
+//     if the fallback is enabled in the config.
+func GetDialer(ip, session, timeout, location, fallback string) (*net.Dialer, error) {
 	var local net.IP
 	var err error
 	var ok bool
@@ -50,8 +55,14 @@ func GetDialer(ip, session, timeout, location string) (*net.Dialer, error) {
 		}
 	}
 
+	// Fallback enabled
+	var noFallback bool
+	if fallback == "no" {
+		noFallback = true
+	}
+
 	// Fallback to IPv4 if the target does not match local address family
-	if config.Get().EnableFallback && IsIPv6(ip) != IsIPv6(local.String()) {
+	if !noFallback && config.Get().EnableFallback && IsIPv6(ip) != IsIPv6(local.String()) {
 		fallback := config.GetAnyFallbackPrefix()
 		log.Warn().Msgf("IPv4 target, using fallback prefix: %s", fallback)
 

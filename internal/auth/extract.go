@@ -12,6 +12,7 @@ const (
 	ParamSession  string = "session"
 	ParamTimeout  string = "timeout"
 	ParamLocation string = "country"
+	ParamFallback string = "fallback"
 )
 
 var sessionRegex = regexp.MustCompile(`^[a-zA-Z]+$`)
