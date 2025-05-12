@@ -30,9 +30,6 @@ func CopyTimeout(destination, source net.Conn, timeout time.Duration) int64 {
 // CopyBidirectional copies data between two io.ReadCloser and io.WriteCloser
 // in both directions
 func CopyBidirectional(destination, source net.Conn, timeout time.Duration) int64 {
-	defer destination.Close()
-	defer source.Close()
-
 	var written int64
 	var wg sync.WaitGroup
 	wg.Add(2)
