@@ -29,6 +29,7 @@ require (
 	github.com/goccy/go-yaml v1.17.1
 	github.com/lorenzosaino/go-sysctl v0.3.1
 	github.com/redis/go-redis/v9 v9.8.0
+	github.com/valyala/fastrand v1.1.0
 	github.com/vishvananda/netns v0.0.4 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 )
