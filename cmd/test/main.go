@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -17,7 +19,7 @@ type benchmarkResult struct {
 	throughput float64
 }
 
-func runBenchmark(concurrency, totalRequests int) benchmarkResult {
+func runBenchmark(concurrency, totalRequests int, mode string, test_port int) benchmarkResult {
 	var durations []time.Duration
 	var durationsMu sync.Mutex
 	var completed int64
@@ -27,7 +29,7 @@ func runBenchmark(concurrency, totalRequests int) benchmarkResult {
 			MaxIdleConns:        concurrency,
 			MaxIdleConnsPerHost: concurrency,
 			Proxy: func(req *http.Request) (*url.URL, error) {
-				return url.Parse("http://username:password@localhost:8080")
+				return url.Parse(mode + "://username:password@localhost:8080")
 			},
 		},
 		Timeout: 10 * time.Second,
@@ -47,7 +49,7 @@ func runBenchmark(concurrency, totalRequests int) benchmarkResult {
 				}
 
 				start := time.Now()
-				req, err := http.NewRequest("GET", "http://[::1]:8081", nil)
+				req, err := http.NewRequest("GET", "http://[::1]:"+strconv.Itoa(test_port), nil)
 				if err != nil {
 					continue
 				}
@@ -94,7 +96,10 @@ func runBenchmark(concurrency, totalRequests int) benchmarkResult {
 }
 
 func main() {
-	// concurrency, totalRequests
+	mode := flag.String("mode", "http", "http, socks5, socks5-connect")
+	test_port := flag.Int("test_port", 8081, "test port")
+	flag.Parse()
+
 	concurrencyLevels := [][]int{
 		{100, 600},
 		{250, 1500},
@@ -107,7 +112,7 @@ func main() {
 
 	for _, c := range concurrencyLevels {
 		fmt.Printf("Running benchmark: %d concurrency, %d total requests\n", c[0], c[1])
-		result := runBenchmark(c[0], c[1])
+		result := runBenchmark(c[0], c[1], *mode, *test_port)
 		fmt.Printf("Fastest:  %v\n", result.fastest)
 		fmt.Printf("Slowest:  %v\n", result.slowest)
 		fmt.Printf("Average:  %v\n", result.average)

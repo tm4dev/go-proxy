@@ -5,6 +5,7 @@ A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, sess
 ## Features
 
 - IPv4 or IPv6 back-connect
+- HTTP and SOCKS5(h) support
 - Multiple IPv6-IPv4 prefixes supported, with per-country prefixes
 - Session and timeout support to re-use generated IP
 - Up to 14,000 requests per second
@@ -12,11 +13,6 @@ A configurable proxy server in Go, supporting rotating IPv4/IPv6 addresses, sess
 - Automatic IPv6 routing and sysctl setup
 - Authentication with Redis or credentials
 - One listener per core via `SO_REUSEPORT` and `SO_REUSEADDR`
-
-## Limitations
-
-- No SOCKS5 support
-  - SOCKS5 resolves IP locally which makes it inefficient for hosts without IPv6
 
 ## Setup
 
@@ -87,6 +83,12 @@ curl -x http://john-country-ch:doe@localhost:8080 http://api.ipquery.io
 # Disable fallback (disable switching to IPv4 if the target is not IPv6-capable)
 # Recommended when using IPv6-only websites to ensure the IP is always IPv6
 curl -x http://john-fallback-no:doe@localhost:8080 http://api.ipquery.io
+
+# SOCKS5
+curl -x socks5://john:doe@localhost:8080 http://api.ipquery.io
+
+# SOCKS5h (server-side DNS resolution, recommended)
+curl -x socks5h://john:doe@localhost:8080 http://api.ipquery.io
 ```
 
 > Session ID must be alphanumeric, between 6 and 24 characters.

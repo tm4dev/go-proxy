@@ -35,8 +35,14 @@ func GetCredentials(req *http.Request) (string, string, string) {
 	}
 
 	username, password, _ := strings.Cut(string(decoded), ":")
-	username, params, _ := strings.Cut(username, "-")
+	username, params := SplitParams(username)
 	return username, password, params
+}
+
+// SplitParams splits the username and params
+func SplitParams(username string) (string, string) {
+	username, params, _ := strings.Cut(username, "-")
+	return username, params
 }
 
 // GetParams returns a map of the parameters from the username

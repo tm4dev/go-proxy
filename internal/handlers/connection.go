@@ -13,6 +13,23 @@ func HandleConnection(workerId int, conn net.Conn) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
+
+	if IsSocks(reader) {
+		written := HandleSocks(conn, reader)
+		if written == -1 {
+			log.Error().
+				Int("worker_id", workerId).
+				Msg("Request failed")
+		} else {
+			log.Trace().
+				Int("worker_id", workerId).
+				Int64("written", written).
+				Msg("Request handled")
+		}
+
+		return
+	}
+
 	for {
 		req, err := httpParse.ParseRequest(reader)
 		if err != nil {
