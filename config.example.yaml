@@ -4,7 +4,6 @@ debug_mode: false
 test_port: 0
 network_type: "tcp6"
 max_timeout: 30
-http_close: true
 auth:
   type: "credentials"
   credentials:

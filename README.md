@@ -37,7 +37,6 @@ debug_mode: false # Enable pretty-print logs, don't enable in production
 test_port: -1 # Enable a test server on port 8081 for benchmarking
 network_type: "tcp6" # tcp = dual-stack, tcp6 = IPv6 only, tcp4 = IPv4 only
 max_timeout: 30 # Maximum timeout for a request in seconds
-http_close: true # Force "Connection: close" header in HTTP-only requests (faster)
 auth:
   type: "credentials" # none, credentials, redis
   credentials:

@@ -1,50 +1,32 @@
 package nio
 
 import (
+	"io"
 	"net"
-	"sync"
-	"sync/atomic"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
-// CopyTimeout copies data between two io.ReadCloser and io.WriteCloser
-// with a timeout
-func CopyTimeout(destination, source net.Conn, timeout time.Duration) int64 {
-	dst := destination.(*net.TCPConn)
-	src := source.(*net.TCPConn)
-
+// CopyOnce copies data between two io.ReadCloser and io.WriteCloser
+// in one direction
+func CopyOnce(dst, src net.Conn, timeout time.Duration) int64 {
 	src.SetDeadline(time.Now().Add(timeout))
 	dst.SetDeadline(time.Now().Add(timeout))
 
-	written, err := src.WriteTo(dst)
-	if err != nil {
-		log.Error().Err(err).Msg("Error transferring")
-		return -1
-	}
-
-	return written
-}
-
-// CopyBidirectional copies data between two io.ReadCloser and io.WriteCloser
-// in both directions
-func CopyBidirectional(destination, source net.Conn, timeout time.Duration) int64 {
-	var written int64
-	var wg sync.WaitGroup
-	wg.Add(2)
+	done := make(chan struct{})
+	var n1, n2 int64
 
 	go func() {
-		defer wg.Done()
-		atomic.AddInt64(&written, CopyTimeout(destination, source, timeout))
+		n1, _ = io.Copy(dst, src)
+		done <- struct{}{}
 	}()
 
 	go func() {
-		defer wg.Done()
-		atomic.AddInt64(&written, CopyTimeout(source, destination, timeout))
+		n2, _ = io.Copy(src, dst)
+		done <- struct{}{}
 	}()
 
-	wg.Wait()
+	// Wait for one direction to finish
+	<-done
 
-	return written
+	return n1 + n2
 }

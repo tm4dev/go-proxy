@@ -27,10 +27,6 @@ func HandleHTTP(w net.Conn, buf *bufio.Reader, r *http.Request) int64 {
 		delete(r.Header, header)
 	}
 
-	if config.Get().HTTPClose {
-		r.Header["Connection"] = []byte("close")
-	}
-
 	ip, err := nio.ResolveHostname(string(r.Host))
 	if err != nil {
 		log.Error().Err(err).Msg("Error resolving hostname")
@@ -66,5 +62,5 @@ func HandleHTTP(w net.Conn, buf *bufio.Reader, r *http.Request) int64 {
 		return -1
 	}
 
-	return nio.CopyTimeout(w, destConn, time.Duration(config.Get().MaxTimeout)*time.Second)
+	return nio.CopyOnce(w, destConn, time.Duration(config.Get().MaxTimeout)*time.Second)
 }
