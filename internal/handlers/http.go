@@ -23,7 +23,16 @@ func HandleHTTP(w net.Conn, buf *bufio.Reader, r *http.Request) int64 {
 
 	params := auth.GetParams(encodedParams)
 
+	// Check if this is a WebSocket upgrade request
+	upgradeHeader := r.Header["Upgrade"]
+	connectionHeader := r.Header["Connection"]
+	isWebSocket := len(upgradeHeader) > 0 && string(upgradeHeader) == "websocket"
+
+	// Don't delete headers needed for WebSocket
 	for _, header := range config.Get().DeletedHeaders {
+		if isWebSocket && (header == "Upgrade" || header == "Connection" || header == "Sec-WebSocket-Key" || header == "Sec-WebSocket-Version" || header == "Sec-WebSocket-Extensions") {
+			continue
+		}
 		delete(r.Header, header)
 	}
 
@@ -60,6 +69,13 @@ func HandleHTTP(w net.Conn, buf *bufio.Reader, r *http.Request) int64 {
 		log.Error().Err(err).Msg("Error writing request")
 		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
 		return -1
+	}
+
+	// For WebSocket connections, use longer timeout and bidirectional copy
+	if isWebSocket {
+		log.Debug().Str("upgrade", string(upgradeHeader)).Msg("WebSocket upgrade detected")
+		// Use much longer timeout for WebSocket persistent connections
+		return nio.CopyOnce(w, destConn, time.Duration(config.Get().MaxTimeout)*10*time.Second)
 	}
 
 	return nio.CopyOnce(w, destConn, time.Duration(config.Get().MaxTimeout)*time.Second)

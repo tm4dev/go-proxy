@@ -54,6 +54,7 @@ func HandleTunneling(w net.Conn, r *http.Request) int64 {
 		w.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
 		return -1
 	}
+	defer destConn.Close()
 
 	w.Write([]byte("HTTP/1.1 200 Connection Established\r\n\r\n"))
 	return nio.CopyOnce(w, destConn, time.Duration(config.Get().MaxTimeout)*time.Second)
