@@ -25,7 +25,6 @@ func HandleHTTP(w net.Conn, buf *bufio.Reader, r *http.Request) int64 {
 
 	// Check if this is a WebSocket upgrade request
 	upgradeHeader := r.Header["Upgrade"]
-	connectionHeader := r.Header["Connection"]
 	isWebSocket := len(upgradeHeader) > 0 && string(upgradeHeader) == "websocket"
 
 	// Don't delete headers needed for WebSocket
